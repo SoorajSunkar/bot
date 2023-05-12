@@ -263,47 +263,81 @@ bot.on('callback_query',async (msg)=>{
       
       }
       else if(data=='edit'){
-          let data = fs.readFileSync('markup','utf-8');
-          data = JSON.parse(data);
-          adminChecker  =true;
-          for(let a =0;a<data.length;a++){
-              for(let b =0;b<data[a].length;b++){
-              bot.sendMessage(chatId,data[a][b].text);
+        let dataKey = fs.readFileSync('markup','utf-8');
+        let mainData = fs.readFileSync('data','utf-8');
+        dataKey = JSON.parse(dataKey);
+        mainData = JSON.parse(mainData);
+        let keyFound = false;
+        let value;
+        adminChecker = false;
+        let promise = new Promise((res,rej)=>{
+          for(let a =0;a<dataKey.length;a++){
+            for(let b =0;b<dataKey[a].length;b++){
+              // console.log(dataKey[a][b].text);
+              bot.sendMessage(chatId,dataKey[a][b].text);
             }
           }
-          // dealing 1s to print all key well
-
-            let input = bot.sendMessage(chatId,"copy and past the key to be removed",{
+          res('done');
+        })
+      
+        promise.then((val)=>{
+          setTimeout(()=>{
+            let send = bot.sendMessage(chatId,'copy and past the key',{
               reply_markup:{
-                 force_reply:true
+                force_reply:true
               }
-           });
-          input.then((val)=>{
-           let reply = bot.onReplyToMessage(chatId,val.message_id,(reply)=>{
+            })
 
-            console.log(reply.text)
-            for(let a =0;a<data.length;a++){
-              for(let b =0;b<data[a].length;b++){
-                  console.log(data[a][b])
-                  if(data[a][b].text==reply.text){
-                      let inputForChange = bot.sendMessage(chatId,'Enter the new value now',{
-                        reply_markup:{
-                          force_reply:true
+            send.then((val)=>{
+              bot.onReplyToMessage(chatId,val.message_id,(reply)=>{
+                let sendPromise = new Promise((res,rej)=>{
+                  for(let a = 0;a<dataKey.length;a++){
+                    for(let b = 0;b<dataKey[a].length;b++){
+                      if(dataKey[a][b].text==reply.text){
+                        keyFound = true;
+                        res(reply.text);
+                      }
+                    }
+                  }
+                  if(keyFound ==false){
+                    rej('err')
+                  }
+                })
+                sendPromise.then((val)=>{
+                  console.log(val);
+                  let key  = val
+                  let newValue = bot.sendMessage(chatId,'Enter the new value',{
+                    reply_markup:{
+                      force_reply:true
+                    }
+                  })
+
+                  newValue.then((val)=>{
+                    bot.onReplyToMessage(chatId,val.message_id,(reply)=>{
+                      // console.log("the rply is" ,reply.text);
+                      try{
+                        let isObj = JSON.parse(mainData.data[key]);
+                        if(typeof isObj ==='object'){
+                          bot.sendMessage(chatId,'cannot edit message with image');
+                          adminChecker = true;
                         }
-                      });
-  
-                      
-                  }
-                  else{
-                      adminChecker = true;
-                      bot.sendMessage(chatId,'Error!');
-                      adminChecker= true;
-                  }
-              }
-            }  
-           })
+                      }
+                      catch(err){
+                        mainData.data[key] = reply.text;
+                        fs.writeFileSync('data',JSON.stringify(mainData));
+                        adminChecker = true;
+                      }
+                    })
+                  })
 
-          })
+                }).catch((err)=>{
+                  bot.sendMessage(chatId,'Key not found');
+                })
+              })
+            })
+
+          },1000)
+        })
       }
 
       else{
@@ -405,6 +439,12 @@ function remover(chatId,value){
   }
 
 }
+
+function edit(chatId,val,changeVal){
+
+}
+
+edit(3,3,3);
 
 
 
