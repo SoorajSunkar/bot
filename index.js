@@ -4,8 +4,16 @@ const TelegramBot = require('node-telegram-bot-api');
 // Create a new bot with your bot token
 const bot = new TelegramBot('6103447361:AAEUlqFKQ_tTSVkFLlMFCkZEi-ggU36n2ew', { polling: true });
 const fs = require('fs');
+const express = require('express');
+const app  = express();
 
+app.listen(8000,()=>{
+    console.log('server is running...')
+})
 
+app.get('/',(req,res)=>{
+  res.send('hi')
+})
 
 function writeData(obj){
   let fileData = fs.readFileSync('markup','utf-8');
